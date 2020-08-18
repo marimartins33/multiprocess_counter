@@ -7,14 +7,17 @@
 
 #define N_PROCESSOS 4
 
-/*variaveis globais*/
-unsigned long int *entrada;	
+
+	
  
 int i = 0;
-int k =0;
+
 int flag;
+int *contador;
+int *l;
 
 
+unsigned long long int entrada[100];   
   
   
 
@@ -23,142 +26,100 @@ int flag;
 void ler_vetor (void){
  
   char fim;
+  
+  /* Aloca memoria para o vetor entrada*/
+      	
 
   do {
-      scanf("%ld%c", &entrada[i], &fim);
+      scanf("%llu%c", &entrada[i], &fim);
       i++;
     } while(fim != '\n');
 
-      
-}
+    
 
-void calculo_primo (int primos){
+	
+}	
+	
+	
+void calculo_primo(unsigned long long int primos){
  
  
+  unsigned long long int div = 0;
 
-
-  int div = 0;
  
- 
-  for (k = 1; k <= primos; k++) {
+  for (unsigned long long int k = 1; k <= primos; k++) {
     if (primos % k== 0) { 
      div++;
     }
   }
     
   if (div == 2){
-   flag = 1;
-    }
-  else{
-   ;
-	}
+  *contador = *contador+1;
+   }
+ 
+ *l = *l -1;
+	//printf("primo %llu \ncontador %d \nl %d \n",primos,*contador,*l);
 }
-
-
  
 int main() {
-
-  /*aloca memoria para o vetor entrada*/
-  entrada = (unsigned long int*) malloc (sizeof(unsigned long int)*100);
-
   
-   
- /* Definir flags de protecao e visibilidade de memoria */
+   ler_vetor();
+
+    /* Definir flags de protecao e visibilidade de memoria */
   int protection = PROT_READ | PROT_WRITE;
   int visibility = MAP_SHARED | MAP_ANON;
 
 /*cria memoria compartilhada para o vetor entrada*/
- int *primo;
-  primo = (int*) mmap(NULL, sizeof(int)*i,protection, visibility, 0, 0);
+ unsigned long long int *primo;
+  primo = (unsigned long long int*) mmap(NULL, sizeof(unsigned long long int)*i,protection, visibility, 0, 0);
 
 
 /* Cria memoria compartilhada para a variavel contador*/
-    int *contador;	
+    	
     contador = (int*) mmap(NULL, sizeof(int), protection, visibility, 0, 0);
   
   /*cria memoaria compartilahda para ponteiro l*/
-  int *l;
+   
   l = (int*) mmap(NULL, sizeof(int), protection, visibility, 0, 0);
-  
-  *l = i;  
-  *primo = entrada[*l];
-  
-  
+
+  *l = i; 
+       
  /*cria os processos*/ 
   pid_t filho[N_PROCESSOS];
-  
-  ler_vetor();
+  //printf("criei processos \n");
 
-  
-/*cria processos filhos*/
-  for (int j=0; j<N_PROCESSOS; j++) {
-    filho[j] = fork();
-
-sleep(1); 
-    
-    while (*l >= 0){
-
-
-      if (j == 0) {
-      calculo_primo(*primo);
-      if (flag==1){
-       *contador = *contador+1;
-       }
-      *l = *l -1;
+  /*cria processos filhos*/
+ while (*l > 0){ 
+   int n;
+   if (*l>4){
+     n=4;
+ 
+     }
+     else{
+       n =*l;
+     }
       
-      
-      
+    //printf("l antes %d \n",*l);
+    for (int j=0; j<n; j++) {
+      filho[j] = fork();
+      //printf("criei processos filhos \n");
+               
+      if (filho[j] == 0) {
+        *primo = entrada[(*l-1)];
+     	 calculo_primo(*primo);
+        exit(0);
       }
-
-
-      else if (j == 1) {
-      /*executa no processo filho 1*/
-      calculo_primo(*primo);
-       if (flag==1){
-       *contador = *contador+1;
-       }
-      *l = *l -1;
-      
-      
-      }
-
-      else if (j== 2) {
-      /*executa no processo filho 2*/
-      calculo_primo(*primo);
-       if (flag==1){
-       *contador = *contador+1;
-       }
-      *l = *l -1;
-      
-      
-      }
-
-      else if (j== 3) {
-      /*executa no processo filho 3*/
-      
-      calculo_primo(*primo);
-       if (flag==1){
-       *contador = *contador+1;
-       }
-      *l = *l -1;
-      
-      }
+           
     }  
 
-
-
-
-    exit(0);
-  }
-
-  /*espera processos acabar de terminar*/
-  for (int j=0; j<N_PROCESSOS; j++) {
+   /*espera processos acabar de terminar*/
+  for (int j=0; j<n; j++) {
     waitpid(filho[j], NULL, 0);
   }
-  
-  
 
-/*informa quantidade de primos*/
+   
+  }
+  /*informa quantidade de primos*/
   printf("%d\n", *contador);
   return 0;
 
